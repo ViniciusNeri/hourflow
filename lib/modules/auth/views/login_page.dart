@@ -185,6 +185,48 @@ class _LoginPageState extends State<LoginPage> {
                     style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w400),
                   ),
                 ),
+
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      "Não tem uma conta?",
+                      style: TextStyle(color: Colors.white70),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        // Get.toNamed('/register'); // Exemplo se usar rotas do GetX
+                        print("Ir para tela de cadastro");
+                      },
+                      child: const Text(
+                        "Cadastre-se",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+
+                const SizedBox(height: 40), // Espaço extra para separar do botão
+                const Text(
+                  "© 2026 Vinícius Neri",
+                  style: TextStyle(
+                    color: Colors.white60, 
+                    fontSize: 14,
+                    fontWeight: FontWeight.w300,
+                  ),
+                ),
+                const Text(
+                  "Todos os direitos reservados",
+                  style: TextStyle(
+                    color: Colors.white54, 
+                    fontSize: 12,
+                  ),
+                ),
               ],
             ),
           ),
