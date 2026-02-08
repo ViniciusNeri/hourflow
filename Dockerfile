@@ -1,29 +1,24 @@
 # Estágio 1: Build
 FROM debian:latest AS build-env
 
-# Instala apenas o essencial
-RUN apt-get update && apt-get install -y curl git unzip xz-utils libglu1-mesa
+# Instala o básico
+RUN apt-get update && apt-get install -y curl git unzip xz-utils libglu1-mesa ca-certificates
 
 # Instala o Flutter
 RUN git clone https://github.com/flutter/flutter.git -b stable /usr/local/flutter
 ENV PATH="/usr/local/flutter/bin:/usr/local/flutter/bin/cache/dart-sdk/bin:${PATH}"
 
-# CONFIGURAÇÃO CRUCIAL: Desabilita tudo que não é Web para evitar downloads inúteis (e o erro do Gradle)
-RUN flutter config --no-analytics
-RUN flutter config --no-enable-android
-RUN flutter config --no-enable-ios
-RUN flutter config --no-enable-linux-desktop
-RUN flutter config --no-enable-windows-desktop
-RUN flutter config --no-enable-macos-desktop
+# Força a desativação de tudo e remove o cache do Gradle/Android que causa o erro
+RUN flutter config --no-analytics && \
+    flutter config --no-enable-android && \
+    flutter config --no-enable-ios && \
+    rm -rf /usr/local/flutter/bin/cache/artifacts/gradle_wrapper
 
-# Pre-download apenas dos artefatos Web
-RUN flutter precache --web
-
-# Prepara o app
+# Prepara o diretório do app
 WORKDIR /app
 COPY . .
 
-# Build Web
+# Roda o build direto (o build web vai baixar o que precisa sem passar pelo tar do gradle)
 RUN flutter pub get
 RUN flutter build web --release
 
