@@ -104,17 +104,19 @@ class _LoginPageState extends State<LoginPage> {
                         _buildLabel("E-mail"),
                         _buildTextField(
                           controller: _emailController,
-                          hint: "exemplo@email.com",
+                          hint: "seu_email@email.com",
                           icon: Icons.email_outlined,
+                          textInputAction: TextInputAction.next,
                         ),
                         const SizedBox(height: 20),
                         
                         _buildLabel("Senha"),
                         _buildTextField(
                           controller: _passwordController,
-                          hint: "Sua senha secreta",
+                          hint: "Sua senha segura",
                           icon: Icons.lock_outline,
                           isPassword: true,
+                          onSubmitted: (_) => authController.login(_emailController.text, _passwordController.text),
                         ),
                         
                         const SizedBox(height: 30),
@@ -206,30 +208,30 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   // Função helper para os campos de texto
-  Widget _buildTextField({
-    required TextEditingController controller, 
-    required String hint, 
-    required IconData icon, 
-    bool isPassword = false
+    Widget _buildTextField({
+    required TextEditingController controller,
+    required String hint,
+    required IconData icon,
+    bool isPassword = false,
+    TextInputAction? textInputAction, // Adicione este parâmetro
+    ValueChanged<String>? onSubmitted, // Adicione este parâmetro
   }) {
     return TextField(
       controller: controller,
       obscureText: isPassword,
+      textInputAction: textInputAction, // Repassa para o TextField nativo
+      onSubmitted: onSubmitted,         // Repassa para o TextField nativo
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
-        prefixIcon: Icon(icon, color: const Color(0xFF2575FC), size: 20),
+        prefixIcon: Icon(icon, color: const Color(0xFF2575FC)),
         filled: true,
-        fillColor: const Color(0xFFF3F6F9),
+        fillColor: Colors.white,
         contentPadding: const EdgeInsets.symmetric(vertical: 18),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
         ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: const BorderSide(color: Color(0xFF2575FC), width: 1),
-        ),
+        // Adicione aqui o restante do seu estilo (BoxShadow, etc) se houver
       ),
     );
   }
