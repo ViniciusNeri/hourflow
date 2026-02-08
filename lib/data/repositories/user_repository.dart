@@ -8,9 +8,6 @@ class UserRepository {
 
   Future<UserModel?> getUser(String id) async {
     final response = await _provider.getUserProfile(id);
-
-    print("STATUS API: ${response.statusCode}");
-    print("BODY API: ${response.body}"); // ISSO VAI MOSTRAR O QUE O SERVER MANDOU
     
     if (response.status.hasError) {
       throw Exception("Erro ao buscar usuário: ${response.statusText}");

@@ -13,6 +13,10 @@ import 'modules/home/views/simple_input_page.dart';
 import 'modules/home/views/detailed_input_page.dart';
 import 'data/datasources/api_datasource.dart';
 import 'data/repositories/auth_repository_impl.dart';
+import 'data/providers/spreadsheet_provider.dart';
+import 'data/repositories/spreadsheet_repository.dart';
+import 'modules/home/controllers/process_controller.dart';
+import 'modules/spreadsheet/controllers/spreadsheet_controller.dart';
 
 void main() async {
   // 1. Garante a inicialização dos bindings do Flutter
@@ -30,6 +34,10 @@ void main() async {
   Get.lazyPut(() => AuthRepositoryImpl(Get.find<ApiDatasource>()));
   //Get.lazyPut(() => AuthController(Get.find<AuthRepositoryImpl>()), permanent: true);
   Get.put(AuthController(Get.find<AuthRepositoryImpl>()), permanent: true);
+  Get.lazyPut(() => SpreadSheetProvider());
+  Get.lazyPut(() => SpreadSheetRepository(Get.find<SpreadSheetProvider>()));
+  //Get.put(() => SpreadSheetController(Get.find<SpreadSheetRepository>()), permanent: true);
+  Get.put(SpreadSheetController(Get.find<SpreadSheetRepository>()), permanent: true);
 
   runApp(const HourFlowApp());
 }

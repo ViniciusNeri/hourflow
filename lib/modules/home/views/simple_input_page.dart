@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../spreadsheet/controllers/spreadsheet_controller.dart';
 
 class SimpleInputPage extends StatelessWidget {
   const SimpleInputPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+
+    final controller = Get.put(SpreadSheetController(Get.find()));
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC), // Um tom levemente acinzentado
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: const Text("Envio Simples", style: TextStyle(color: Color(0xFF1E293B), fontWeight: FontWeight.bold)),
+        title: const Text("Envio Simples",
+            style: TextStyle(color: Color(0xFF1E293B), fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
@@ -18,9 +23,9 @@ class SimpleInputPage extends StatelessWidget {
           onPressed: () => Get.back(),
         ),
       ),
-      body: Center( // 1. Centraliza o conteúdo
+      body: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 500), // 2. Define a largura máxima (estilo modal)
+          constraints: const BoxConstraints(maxWidth: 500),
           child: Container(
             margin: const EdgeInsets.all(24),
             padding: const EdgeInsets.all(32),
@@ -37,7 +42,7 @@ class SimpleInputPage extends StatelessWidget {
             ),
             child: SingleChildScrollView(
               child: Column(
-                mainAxisSize: MainAxisSize.min, // Ocupa apenas o espaço necessário
+                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Center(
@@ -53,20 +58,30 @@ class SimpleInputPage extends StatelessWidget {
                   const SizedBox(height: 32),
 
                   _buildLabel("Mês de Referência"),
-                  DropdownButtonFormField<String>(
+                  
+                  // 2. Vincula o Dropdown ao estado reativo do Controller
+                  Obx(() => DropdownButtonFormField<String>(
+                    value: controller.selectedMonth.value.capitalizeFirst, // Exibe com inicial maiúscula
                     decoration: _inputDecoration(Icons.calendar_month),
                     items: ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"]
                         .map((m) => DropdownMenuItem(value: m, child: Text(m)))
                         .toList(),
-                    onChanged: (val) {},
+                    onChanged: (val) {
+                      if (val != null) {
+                        controller.selectedMonth.value = val.toLowerCase();
+                      }
+                    },
                     hint: const Text("Selecione o mês"),
-                  ),
+                  )),
 
                   const SizedBox(height: 24),
 
                   _buildLabel("Total de Horas Trabalhadas"),
+                  
+                  // 3. Vincula o TextField ao TextEditingController do Controller
                   TextField(
-                    keyboardType: TextInputType.number,
+                    controller: controller.hoursController,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     decoration: _inputDecoration(Icons.timer_outlined).copyWith(
                       hintText: "Ex: 160",
                     ),
@@ -74,29 +89,26 @@ class SimpleInputPage extends StatelessWidget {
 
                   const SizedBox(height: 40),
 
+                  // 4. Botão com estado de carregamento (Obx)
                   SizedBox(
                     width: double.infinity,
                     height: 55,
-                    child: ElevatedButton(
-                      onPressed: () {
-                              Get.snackbar(
-                                            "Sucesso!", 
-                                            "Lançamento enviado com sucesso.",
-                                            backgroundColor: Colors.green,
-                                            colorText: Colors.white,
-                                            snackPosition: SnackPosition.BOTTOM,
-                                        );
-                      },
+                    child: Obx(() => ElevatedButton(
+                      onPressed: controller.isLoading.value 
+                          ? null 
+                          : () => controller.submitSimpleInput(),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF2575FC),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                         elevation: 0,
                       ),
-                      child: const Text(
-                        "FINALIZAR E ENVIAR",
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                      ),
-                    ),
+                      child: controller.isLoading.value
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text(
+                              "FINALIZAR E ENVIAR",
+                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                            ),
+                    )),
                   ),
                 ],
               ),
@@ -107,7 +119,6 @@ class SimpleInputPage extends StatelessWidget {
     );
   }
 
-  // Helpers para não repetir código
   Widget _buildLabel(String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),

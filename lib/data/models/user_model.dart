@@ -13,8 +13,7 @@ class UserModel extends UserEntity {
   });
 
   // De JSON para Objeto (usado na resposta da API)
-  factory UserModel.fromJson(Map<String, dynamic> json) {
-    print("DEBUG JSON: $json");
+  factory UserModel.fromJson(Map<String, dynamic> json) {    
     return UserModel(
       id: json['id'] ?? json['_id'] ?? '',
       name: json['name'] ?? '',

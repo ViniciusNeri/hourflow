@@ -18,7 +18,7 @@ class AuthController extends GetxController {
 
   Future<void> login(String email, String password) async {
     try {
-      
+
       isLoading.value = true;
       
       // 1. Chama o repositório
@@ -30,12 +30,8 @@ class AuthController extends GetxController {
           await _storageService.saveToken(loggedUser.token!);
         }
 
-        // 4. Atualiza o usuário reativo local
         user.value = loggedUser;
-
-        print("Login realizado com sucesso. ID salvo: ${loggedUser.id}");
-
-        // 5. Vai para a Home limpando a pilha de telas e controllers
+        
         Get.offAllNamed('/home');
       } else {
         Get.snackbar(
