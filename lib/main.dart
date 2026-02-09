@@ -17,6 +17,8 @@ import 'data/providers/spreadsheet_provider.dart';
 import 'data/repositories/spreadsheet_repository.dart';
 import 'modules/home/controllers/process_controller.dart';
 import 'modules/spreadsheet/controllers/spreadsheet_controller.dart';
+import 'modules/auth/views/register_page.dart';
+import 'modules/auth/views/verification_page.dart';
 
 void main() async {
   // 1. Garante a inicialização dos bindings do Flutter
@@ -25,18 +27,22 @@ void main() async {
   // 2. Inicializa o armazenamento local
   await GetStorage.init();
 
-  // 3. Configura as dependências usando GetX
+// --- Dependências Core ---
   Get.put(AuthService()); 
+  Get.lazyPut(() => ApiDatasource()); 	
+
+  // --- Usuário e Repositórios ---
   Get.lazyPut(() => UserProvider());
   Get.lazyPut(() => UserRepository(Get.find<UserProvider>()));
-  Get.lazyPut(() => ApiDatasource());  
-  Get.put(SettingsController(Get.find<UserRepository>()));
   Get.lazyPut(() => AuthRepositoryImpl(Get.find<ApiDatasource>()));
-  //Get.lazyPut(() => AuthController(Get.find<AuthRepositoryImpl>()), permanent: true);
+
+  // --- Controllers Globais ---
+  Get.put(SettingsController(Get.find<UserRepository>()));
   Get.put(AuthController(Get.find<AuthRepositoryImpl>()), permanent: true);
+  
+  // --- Planilhas ---
   Get.lazyPut(() => SpreadSheetProvider());
   Get.lazyPut(() => SpreadSheetRepository(Get.find<SpreadSheetProvider>()));
-  //Get.put(() => SpreadSheetController(Get.find<SpreadSheetRepository>()), permanent: true);
   Get.put(SpreadSheetController(Get.find<SpreadSheetRepository>()), permanent: true);
 
   runApp(const HourFlowApp());
@@ -53,7 +59,9 @@ class HourFlowApp extends StatelessWidget {
       theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
       initialRoute: '/login',
       getPages: [
-        GetPage(name: '/login', page: () => LoginPage()), // Removido o 'const' se der erro
+        GetPage(name: '/login', page: () => LoginPage()),
+        GetPage(name: '/signup',page: () => RegisterPage(), transition: Transition.fadeIn),
+        GetPage(name: '/verification', page: () => VerificationPage(), transition: Transition.rightToLeftWithFade), 
         GetPage(name: '/home', page: () => HomePage()),
         GetPage(
           name: '/input-simple', 

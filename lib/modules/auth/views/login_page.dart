@@ -195,7 +195,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     TextButton(
                       onPressed: () {
-                        // Get.toNamed('/register'); // Exemplo se usar rotas do GetX
+                        Get.toNamed('/signup'); // Exemplo se usar rotas do GetX
                         print("Ir para tela de cadastro");
                       },
                       child: const Text(
