@@ -36,10 +36,13 @@ class RegisterPage extends StatelessWidget {
                 const SizedBox(height: 10),
                 const Text(
                   "HourFlow",
-                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 1.5),
+                  style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      letterSpacing: 1.5),
                 ),
                 const SizedBox(height: 30),
-                
                 ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 450),
                   child: Container(
@@ -48,7 +51,10 @@ class RegisterPage extends StatelessWidget {
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(28),
                       boxShadow: [
-                        BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 20, offset: const Offset(0, 10))
+                        BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10))
                       ],
                     ),
                     child: Form(
@@ -56,9 +62,14 @@ class RegisterPage extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text("Nova Conta", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF1A1C1E))),
+                          const Text("Nova Conta",
+                              style: TextStyle(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF1A1C1E))),
                           const SizedBox(height: 8),
-                          const Text("Preencha os dados para solicitar acesso", style: TextStyle(color: Colors.grey)),
+                          const Text("Preencha os dados para solicitar acesso",
+                              style: TextStyle(color: Colors.grey)),
                           const SizedBox(height: 30),
                           
                           _buildField(nameCtrl, "Nome Completo", Icons.person_outline),
@@ -68,38 +79,37 @@ class RegisterPage extends StatelessWidget {
                           _buildField(managerCtrl, "E-mail do Gestor", Icons.admin_panel_settings_outlined),
                           
                           const SizedBox(height: 20),
-                          SizedBox(
+                          
+                          // Botão com estado reativo Obx
+                          Obx(() => SizedBox(
                             width: double.infinity,
                             height: 55,
-                            child: Obx(() => Container(
+                            child: Container(
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(15),
-                                gradient: const LinearGradient(colors: [Color(0xFF6A11CB), Color(0xFF2575FC)]),
+                                gradient: controller.isLoading.value 
+                                  ? null 
+                                  : const LinearGradient(colors: [Color(0xFF6A11CB), Color(0xFF2575FC)]),
+                                color: controller.isLoading.value ? Colors.grey : null,
                               ),
                               child: ElevatedButton(
-                                onPressed: controller.isLoading.value ? null : () {
-                                  if (_formKey.currentState!.validate()) {
-                                    controller.requestSignUp({
-                                      "name": nameCtrl.text,
-                                      "email": emailCtrl.text,
-                                      "password": passCtrl.text,
-                                      "companyName": companyCtrl.text,
-                                      "managerEmail": managerCtrl.text,
-                                      "receiveCopy": true,
-                                    });
-                                  }
-                                },
+                                onPressed: controller.isLoading.value ? null : _handleSignUp,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.transparent,
                                   shadowColor: Colors.transparent,
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                                 ),
                                 child: controller.isLoading.value 
-                                  ? const CircularProgressIndicator(color: Colors.white) 
-                                  : const Text("SOLICITAR CADASTRO", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                  ? const SizedBox(
+                                      height: 24, 
+                                      width: 24, 
+                                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+                                    ) 
+                                  : const Text("SOLICITAR CADASTRO", 
+                                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                               ),
-                            )),
-                          ),
+                            ),
+                          )),
                         ],
                       ),
                     ),
@@ -108,7 +118,8 @@ class RegisterPage extends StatelessWidget {
                 const SizedBox(height: 20),
                 TextButton(
                   onPressed: () => Get.back(),
-                  child: const Text("Já tem conta? Voltar para o Login", style: TextStyle(color: Colors.white)),
+                  child: const Text("Já tem conta? Voltar para o Login",
+                      style: TextStyle(color: Colors.white)),
                 ),
               ],
             ),
@@ -116,6 +127,20 @@ class RegisterPage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  // Função para limpar a UI e chamar o controller
+  void _handleSignUp() {
+    if (_formKey.currentState!.validate()) {
+      controller.requestSignUp(
+        name: nameCtrl.text.trim(),
+        email: emailCtrl.text.trim(),
+        password: passCtrl.text, // O controller tratará como String/Number se necessário
+        companyName: companyCtrl.text.trim(),
+        managerEmail: managerCtrl.text.trim(),
+        receiveCopy: true, // Mantido como true por padrão
+      );
+    }
   }
 
   Widget _buildField(TextEditingController ctrl, String label, IconData icon, {bool isObscure = false}) {
@@ -128,10 +153,18 @@ class RegisterPage extends StatelessWidget {
           labelText: label,
           prefixIcon: Icon(icon, color: const Color(0xFF2575FC)),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey.shade300),
+          ),
           filled: true,
           fillColor: Colors.grey[50],
         ),
-        validator: (val) => val!.isEmpty ? "Obrigatório" : null,
+        validator: (val) {
+          if (val == null || val.isEmpty) return "Obrigatório";
+          if (label.contains("E-mail") && !val.contains("@")) return "E-mail inválido";
+          return null;
+        },
       ),
     );
   }

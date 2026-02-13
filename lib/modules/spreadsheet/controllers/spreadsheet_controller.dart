@@ -1,8 +1,8 @@
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import '../../../data/models/day_model.dart';
-import '../../../data/repositories/spreadsheet_repository.dart';
-import 'package:intl/intl.dart'; // Importante para formatar a data
+import '../../../domain/repositories/spreadsheet_repository.dart';
+import 'package:intl/intl.dart'; 
 import 'package:intl/date_symbol_data_local.dart';
 
 class SpreadSheetController extends GetxController {

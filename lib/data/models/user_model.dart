@@ -1,41 +1,26 @@
 import '../../domain/entities/user_entity.dart';
-
+// Exemplo de como ajustar o construtor do seu UserModel
 class UserModel extends UserEntity {
   UserModel({
-    required super.id,
-    required super.name,
-    required super.email,
-    required super.companyName,
-    required super.managerEmail,
-    required super.receiveCopy,
-    super.createdAt,
-    required super.token,
+    super.id,
+    super.name,
+    super.email,
+    super.token,
+    super.companyName,
+    super.managerEmail,
+    super.receiveCopy,
   });
 
-  // De JSON para Objeto (usado na resposta da API)
-  factory UserModel.fromJson(Map<String, dynamic> json) {    
+  // Garanta que o factory do Model também mapeie os novos campos
+  factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      id: json['id'] ?? json['_id'] ?? '',
-      name: json['name'] ?? '',
-      email: json['email'] ?? '',
-      companyName: json['companyName'] ?? '',
-      managerEmail: json['managerEmail'] ?? '',
+      id: json['id'],
+      name: json['name'],
+      email: json['email'],
+      token: json['token'],
+      companyName: json['companyName'],
+      managerEmail: json['managerEmail'],
       receiveCopy: json['receiveCopy'] ?? false,
-      createdAt: json['createdAt'] != null 
-          ? DateTime.parse(json['createdAt']) 
-          : null,
-      token: json['token'] ?? '',
     );
-  }
-
-  // De Objeto para JSON (usado para salvar no Modal de Settings)
-  Map<String, dynamic> toJson() {
-    return {
-      'name': name,
-      'companyName': companyName,
-      'managerEmail': managerEmail,
-      'receiveCopy': receiveCopy,
-      'token': token,
-    };
   }
 }

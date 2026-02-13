@@ -2,78 +2,56 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 
+// --- Imports de Configuração e Core ---
+import 'app_widget.dart'; // Certifique-se de criar este arquivo com a classe HourFlowApp
+import 'core/utils/storage_service.dart';
 import 'services/auth_service.dart';
-import 'data/providers/user_provider.dart';
-import 'data/repositories/user_repository.dart';
-import 'modules/home/controllers/settings_controller.dart';
-import 'modules/auth/controllers/auth_controller.dart';
-import 'modules/home/views/home_page.dart';
-import 'modules/auth/views/login_page.dart';
-import 'modules/home/views/simple_input_page.dart';
-import 'modules/home/views/detailed_input_page.dart';
 import 'data/datasources/api_datasource.dart';
+
+// --- Imports de Dados (Providers e Repositories) ---
+import 'data/providers/user_provider.dart';
+import 'data/providers/auth_provider.dart';
+import 'data/repositories/user_repository.dart';
 import 'data/repositories/auth_repository_impl.dart';
 import 'data/providers/spreadsheet_provider.dart';
-import 'data/repositories/spreadsheet_repository.dart';
-import 'modules/home/controllers/process_controller.dart';
+import 'data/repositories/spreadsheet_repository_impl.dart';
+import 'domain/repositories/auth_repository.dart';
+import 'domain/repositories/spreadsheet_repository.dart';
+import 'data/repositories/user_repository.dart';
+
+// --- Imports de Controllers ---
+import 'modules/auth/controllers/auth_controller.dart';
+import 'modules/home/controllers/settings_controller.dart';
 import 'modules/spreadsheet/controllers/spreadsheet_controller.dart';
-import 'modules/auth/views/register_page.dart';
-import 'modules/auth/views/verification_page.dart';
+import 'modules/home/controllers/settings_controller.dart';
+import 'modules/home/controllers/home_controller.dart';
 
 void main() async {
-  // 1. Garante a inicialização dos bindings do Flutter
   WidgetsFlutterBinding.ensureInitialized();
   
-  // 2. Inicializa o armazenamento local
+  await GetStorage.init();
+  final storage = GetStorage();
   await GetStorage.init();
 
-// --- Dependências Core ---
-  Get.put(AuthService()); 
-  Get.lazyPut(() => ApiDatasource()); 	
 
-  // --- Usuário e Repositórios ---
+  final bool isLoggedIn = storage.read('is_logged') ?? false;
+
+  Get.put(StorageService()); 
+  Get.put(AuthService()); 
+  Get.lazyPut(() => ApiDatasource());   
+
   Get.lazyPut(() => UserProvider());
   Get.lazyPut(() => UserRepository(Get.find<UserProvider>()));
-  Get.lazyPut(() => AuthRepositoryImpl(Get.find<ApiDatasource>()));
-
-  // --- Controllers Globais ---
   Get.put(SettingsController(Get.find<UserRepository>()));
-  Get.put(AuthController(Get.find<AuthRepositoryImpl>()), permanent: true);
+
+  Get.lazyPut(() => AuthProvider());
+  Get.lazyPut<AuthRepository>(() => AuthRepositoryImpl(Get.find<AuthProvider>()));
+  Get.put(AuthController(Get.find<AuthRepository>()), permanent: true);
   
-  // --- Planilhas ---
   Get.lazyPut(() => SpreadSheetProvider());
-  Get.lazyPut(() => SpreadSheetRepository(Get.find<SpreadSheetProvider>()));
+  Get.lazyPut<SpreadSheetRepository>(() => SpreadSheetRepositoryImpl(Get.find<SpreadSheetProvider>()));
   Get.put(SpreadSheetController(Get.find<SpreadSheetRepository>()), permanent: true);
+  Get.put(HomeController());
 
-  runApp(const HourFlowApp());
-}
-
-class HourFlowApp extends StatelessWidget {
-  const HourFlowApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return GetMaterialApp(
-      title: 'HourFlow',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
-      initialRoute: '/login',
-      getPages: [
-        GetPage(name: '/login', page: () => LoginPage()),
-        GetPage(name: '/signup',page: () => RegisterPage(), transition: Transition.fadeIn),
-        GetPage(name: '/verification', page: () => VerificationPage(), transition: Transition.rightToLeftWithFade), 
-        GetPage(name: '/home', page: () => HomePage()),
-        GetPage(
-          name: '/input-simple', 
-          page: () => SimpleInputPage(), 
-          transition: Transition.rightToLeft
-        ),
-        GetPage(
-          name: '/input-detailed', 
-          page: () => DetailedInputPage(), 
-          transition: Transition.rightToLeft
-        ),
-      ],
-    );
-  }
+  runApp(HourFlowApp(initialRoute: isLoggedIn ? '/home' : '/login'));
 }

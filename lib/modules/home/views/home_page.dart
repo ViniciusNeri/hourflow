@@ -1,24 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../controllers/process_controller.dart';
+import '../controllers/home_controller.dart';
 import '../controllers/settings_controller.dart';
 import 'widgets/settings_modal_content.dart';
 import '../../auth/controllers/auth_controller.dart';
 
-class HomePage extends StatelessWidget {
-  HomePage({super.key});
-
-  // Iniciamos os controllers necessários
-  // O put aqui garante que o ProcessController exista nesta tela
-  final controller = Get.put(ProcessController());
-  
-  // O find busca o SettingsController que já injetamos no main.dart
-  final settingsCtrl = Get.find<SettingsController>();
+class HomePage extends GetView<HomeController> {
+  const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // IMPORTANTE: Sempre que a Home for construída (após login), 
-    // garantimos que os dados do usuário logado sejam carregados.
+    // Buscamos o SettingsController aqui para evitar erros de constante
+    final settingsCtrl = Get.find<SettingsController>();
+
+    // Carrega os dados do usuário assim que a tela termina de renderizar
     WidgetsBinding.instance.addPostFrameCallback((_) {
       settingsCtrl.loadUserData();
     });
@@ -26,41 +21,42 @@ class HomePage extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: const Text("HourFlow", 
-          style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
+        title: const Text(
+          "HourFlow",
+          style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+        ),
         backgroundColor: Colors.white,
         elevation: 0,
-        actions: [              
+        actions: [
           Padding(
             padding: const EdgeInsets.only(right: 8.0),
             child: IconButton(
               icon: const Icon(Icons.settings_outlined, color: Color(0xFF2575FC), size: 28),
               onPressed: () {
-                // Antes de abrir o modal, garantimos que os dados estão atualizados
                 settingsCtrl.loadUserData();
                 _showSettingsModal(context);
               },
             ),
           ),
           IconButton(
-                icon: const Icon(Icons.logout, color: Colors.redAccent),
-                onPressed: () {
-                  Get.defaultDialog(
-                    title: "Sair",
-                    middleText: "Deseja realmente sair da conta?",
-                    backgroundColor: Colors.white,
-                    titleStyle: const TextStyle(color: Color(0xFF2575FC), fontWeight: FontWeight.bold),
-                    middleTextStyle: const TextStyle(color: Color(0xFF2575FC)),
-                    textConfirm: "SIM",
-                    textCancel: "NÃO",
-                    confirmTextColor: Colors.white,
-                    buttonColor: Colors.redAccent,
-                    onConfirm: () {
-                      Get.find<AuthController>().logout();
-                    },
-                  );
+            icon: const Icon(Icons.logout, color: Colors.redAccent),
+            onPressed: () {
+              Get.defaultDialog(
+                title: "Sair",
+                middleText: "Deseja realmente sair da conta?",
+                backgroundColor: Colors.white,
+                titleStyle: const TextStyle(color: Color(0xFF2575FC), fontWeight: FontWeight.bold),
+                middleTextStyle: const TextStyle(color: Color(0xFF2575FC)),
+                textConfirm: "SIM",
+                textCancel: "NÃO",
+                confirmTextColor: Colors.white,
+                buttonColor: Colors.redAccent,
+                onConfirm: () {
+                  Get.find<AuthController>().logout();
                 },
-              ),
+              );
+            },
+          ),
         ],
       ),
       body: Center(
@@ -72,33 +68,33 @@ class HomePage extends StatelessWidget {
               children: [
                 // Header de Boas-vindas dinâmico com Obx
                 Obx(() => Column(
-                  children: [
-                    const CircleAvatar(
-                      radius: 30,
-                      backgroundColor: Color(0xFF2575FC),
-                      child: Icon(Icons.bolt, color: Colors.white, size: 35),
-                    ),
-                    const SizedBox(height: 16),
-                    // Se estiver carregando, mostra um shimmer ou texto genérico
-                    if (settingsCtrl.isLoading.value)
-                      const SizedBox(
-                        height: 20, 
-                        width: 20, 
-                        child: CircularProgressIndicator(strokeWidth: 2)
-                      )
-                    else ...[
-                      Text(
-                        "Olá, ${settingsCtrl.userName.value}!",
-                        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
-                      ),
-                      Text(
-                        settingsCtrl.userCompany.value,
-                        style: TextStyle(color: Colors.grey[600], fontSize: 14),
-                      ),
-                    ],
-                  ],
-                )),
-                
+                      children: [
+                        const CircleAvatar(
+                          radius: 30,
+                          backgroundColor: Color(0xFF2575FC),
+                          child: Icon(Icons.bolt, color: Colors.white, size: 35),
+                        ),
+                        const SizedBox(height: 16),
+                        if (settingsCtrl.isLoading.value)
+                          const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2))
+                        else ...[
+                          Text(
+                            "Olá, ${settingsCtrl.userName.value}!",
+                            style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF1E293B)),
+                          ),
+                          Text(
+                            settingsCtrl.userCompany.value,
+                            style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                          ),
+                        ],
+                      ],
+                    )),
                 const SizedBox(height: 40),
                 const Text(
                   "Como deseja processar as horas?",
@@ -106,27 +102,26 @@ class HomePage extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
 
-                // Opções de Seleção
+                // Opções de Seleção usando o 'controller' do GetView
                 Obx(() => Column(
-                  children: [
-                    _buildOptionCard(
-                      title: "Mês e Horas",
-                      subtitle: "Envio rápido do total mensal",
-                      icon: Icons.access_time_filled,
-                      mode: ProcessMode.simple,
-                      isSelected: controller.processMode.value == ProcessMode.simple,
-                    ),
-                    const SizedBox(height: 12),
-                    _buildOptionCard(
-                      title: "Verificar Lista de Dias",
-                      subtitle: "Confira e processe dia por dia",
-                      icon: Icons.calendar_view_day,
-                      mode: ProcessMode.detailed,
-                      isSelected: controller.processMode.value == ProcessMode.detailed,
-                    ),
-                  ],
-                )),
-
+                      children: [
+                        _buildOptionCard(
+                          title: "Mês e Horas",
+                          subtitle: "Envio rápido do total mensal",
+                          icon: Icons.access_time_filled,
+                          mode: ProcessMode.simple,
+                          isSelected: controller.processMode.value == ProcessMode.simple,
+                        ),
+                        const SizedBox(height: 12),
+                        _buildOptionCard(
+                          title: "Verificar Lista de Dias",
+                          subtitle: "Confira e processe dia por dia",
+                          icon: Icons.calendar_view_day,
+                          mode: ProcessMode.detailed,
+                          isSelected: controller.processMode.value == ProcessMode.detailed,
+                        ),
+                      ],
+                    )),
                 const SizedBox(height: 40),
 
                 // Botão de Ação
@@ -173,8 +168,8 @@ class HomePage extends StatelessWidget {
             color: isSelected ? const Color(0xFF2575FC) : Colors.grey.shade300,
             width: 2,
           ),
-          boxShadow: isSelected 
-              ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))] 
+          boxShadow: isSelected
+              ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))]
               : [],
         ),
         child: Row(
@@ -185,19 +180,17 @@ class HomePage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, 
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold, 
-                      color: isSelected ? const Color(0xFF2575FC) : Colors.black87
-                    )
-                  ),
+                  Text(title,
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: isSelected ? const Color(0xFF2575FC) : Colors.black87)),
                   Text(subtitle, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
                 ],
               ),
             ),
             Icon(
-              isSelected ? Icons.radio_button_checked : Icons.radio_button_off, 
-              color: isSelected ? const Color(0xFF2575FC) : Colors.grey
+              isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
+              color: isSelected ? const Color(0xFF2575FC) : Colors.grey,
             ),
           ],
         ),
@@ -212,7 +205,7 @@ class HomePage extends StatelessWidget {
       backgroundColor: Colors.transparent,
       builder: (context) => Padding(
         padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-        child: const SettingsModalContent(), // Adicionei 'const' para performance
+        child: const SettingsModalContent(),
       ),
     );
   }

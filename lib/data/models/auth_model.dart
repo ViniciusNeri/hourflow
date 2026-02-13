@@ -20,16 +20,16 @@ class AuthModel extends UserEntity {
         );
 
   factory AuthModel.fromJson(Map<String, dynamic> json) {
-    // Aqui pegamos os dados do login
-    final userData = json['user']; 
-    return AuthModel(
-      id: userData['id'] ?? '',
-      name: userData['name'] ?? '',
-      email: userData['email'] ?? '',
-      companyName: userData['companyName'] ?? '',
-      managerEmail: userData['managerEmail'] ?? '',
-      receiveCopy: userData['receiveCopy'] ?? false,
-      token: json['token'] ?? '', // O token geralmente vem na raiz do JSON de login
-    );
-  }
+  final userData = json['user'] ?? json; 
+
+  return AuthModel(
+    id: userData['id'] ?? '',
+    name: userData['name'] ?? '',
+    email: userData['email'] ?? '',
+    companyName: userData['companyName'] ?? '',
+    managerEmail: userData['managerEmail'] ?? '',
+    receiveCopy: userData['receiveCopy'] ?? false,
+    token: json['token'] ?? userData['token'] ?? '', 
+  );
+}
 }

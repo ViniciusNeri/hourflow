@@ -45,11 +45,11 @@ class SettingsController extends GetxController {
       final user = await repository.getUser(authService.userId);
 
             if (user != null) {
-              userName.value = user.name;
-              userCompany.value = user.companyName;
-              nameController.text = user.name;
-              companyController.text = user.companyName;
-              managerEmailController.text = user.managerEmail;
+              userName.value = user.name ?? ''; 
+              userCompany.value = user.companyName ?? ''; 
+              nameController.text = user.name ?? '';
+              companyController.text = user.companyName ?? '';
+              managerEmailController.text = user.managerEmail ?? '';
               receiveCopy.value = user.receiveCopy;
             }else{
               print("DEBUG: O objeto user veio NULO do repository");
@@ -75,15 +75,13 @@ class SettingsController extends GetxController {
       token: "",
     );
 
-    // 3. Chama o Repository para fazer o PUT no Render
     final success = await repository.update(authService.userId, updatedUser);
 
     if (success) {
-      // 4. Se o banco respondeu OK (200), atualizamos a UI da Home
-      userName.value = updatedUser.name;
-      userCompany.value = updatedUser.companyName;
+      userName.value = updatedUser.name ?? '';
+      userCompany.value = updatedUser.companyName ?? '';
 
-      Get.back(); // Fecha o modal de configurações
+      Get.back(); 
       
       Get.snackbar(
         "Sucesso", 

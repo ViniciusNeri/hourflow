@@ -24,8 +24,7 @@ class UserRepository {
     }
     }
 
-  print("AVISO: Corpo da resposta vazio ou em formato desconhecido");
-  return null; // Retorna null se não conseguir criar o UserModel
+    return null; // Retorna null se não conseguir criar o UserModel
   }
 
   // Atualiza o usuário

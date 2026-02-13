@@ -1,57 +1,123 @@
 import 'package:get/get.dart';
+import 'package:flutter/material.dart';
+import 'package:get_storage/get_storage.dart'; 
+
 import '../../../domain/entities/user_entity.dart';
 import '../../../domain/repositories/auth_repository.dart';
 import '../../../core/utils/storage_service.dart';
-import 'package:flutter/material.dart';
 import '../../../services/auth_service.dart';
-import 'package:get_storage/get_storage.dart'; 
 
 class AuthController extends GetxController {
   final AuthRepository _authRepository;
-  final StorageService _storageService = StorageService();
+  
+  final StorageService _secureStorage = StorageService();
+  final _cache = GetStorage(); 
   final AuthService authService = Get.find<AuthService>();
-  String? _tempToken;
-  String? _userEmail;
-
+  
 
   AuthController(this._authRepository);
 
   final isLoading = false.obs;
   final user = Rx<UserEntity?>(null);
+  
+  String? _tempToken;
 
+  @override
+  void onInit() {
+    super.onInit();
+    _restoreLocalSession();
+  }
+
+  void _restoreLocalSession() {
+    final savedUserData = _cache.read('user_data');
+    if (savedUserData != null) {
+      user.value = UserEntity.fromJson(Map<String, dynamic>.from(savedUserData));
+    }
+  }
+
+  // MÉTODO ÚNICO PARA SALVAR SESSÃO
+  Future<void> _saveAuthSession(UserEntity loggedUser) async {
+  // Verifique se o objeto não é nulo antes de prosseguir
+  if (loggedUser.id == null) {
+    print("ERRO: ID do usuário veio nulo do repositório");
+    return;
+  }
+
+  if (loggedUser.token != null) {
+    await _secureStorage.saveToken(loggedUser.token!);
+  }
+
+  // O erro 'Tried to invoke Null' costuma acontecer aqui se toJson() 
+  // tentar acessar uma propriedade que não existe no modelo.
+  await _cache.write('user_data', loggedUser.toJson());
+  await _cache.write('is_logged', true);
+
+  authService.saveUserId(loggedUser.id!);
+  user.value = loggedUser;
+}
+
+  // LOGIN
   Future<void> login(String email, String password) async {
     try {
-
       isLoading.value = true;
-      
-      // 1. Chama o repositório
       final loggedUser = await _authRepository.login(email, password);
 
-      if (loggedUser != null && loggedUser.id != null) {
-        authService.saveUserId(loggedUser.id!);         
-        if (loggedUser.token != null) {
-          await _storageService.saveToken(loggedUser.token!);
-        }
-
-        user.value = loggedUser;
-        
+      if (loggedUser.id != null) {
+        await _saveAuthSession(loggedUser);
         Get.offAllNamed('/home');
-      } else {
-        Get.snackbar(
-          "Erro de Autenticação", 
-          "Usuário ou senha inválidos.",
-          backgroundColor: Colors.redAccent,
-          colorText: Colors.white
-        );
       }
     } catch (e) {
-      print("ERRO CRÍTICO NO LOGIN: $e"); 
-      Get.snackbar(
-        'Erro', 
-        'Não foi possível conectar ao servidor.',
-        backgroundColor: Colors.orange,
-        colorText: Colors.white
-      );
+      Get.snackbar('Erro', e.toString(), backgroundColor: Colors.orange);
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> requestSignUp({
+    required String name,
+    required String email,
+    required String password,
+    required String companyName,
+    required String managerEmail,
+    required bool receiveCopy,
+  }) async {
+    try {
+      isLoading.value = true;
+
+      final userData = {
+        'name': name,
+        'email': email,
+        'password': password,
+        'companyName': companyName,
+        'managerEmail': managerEmail,
+        'receiveCopy': receiveCopy,
+      };
+      print("antes de chamar o requestSignUp com dados: $userData");
+      _tempToken = await _authRepository.requestSignUp(userData);
+
+      Get.toNamed('/verification');
+      Get.snackbar("Sucesso", "Verifique seu e-mail para confirmar o código");
+    } catch (e) {
+      Get.snackbar("Erro no Cadastro", e.toString());
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> confirmCode(String code) async {
+    if (_tempToken == null) {
+      Get.snackbar("Erro", "Sessão expirada. Tente o cadastro novamente.");
+      Get.offAllNamed('/signup');
+      return;
+    }
+
+    try {
+      isLoading.value = true;
+      final userEntity = await _authRepository.confirmSignUp(_tempToken!, code);
+      await _saveAuthSession(userEntity);
+      Get.offAllNamed('/home');
+    } catch (e) {
+      Get.snackbar("Código Inválido", e.toString());
     } finally {
       isLoading.value = false;
     }
@@ -59,67 +125,13 @@ class AuthController extends GetxController {
 
   void logout() async {
     try {
-      // 1. Limpa o ID na memória e no disco
-      authService.saveUserId(''); 
-      
-      // 2. Limpa o token se você usar StorageService
-      final storage = GetStorage();
-      await storage.remove('token');
-      await storage.remove('user_id');
-
-      // 3. Redireciona para o login limpando toda a memória
+      await _secureStorage.deleteToken(); 
+      await _cache.erase();               
+      authService.saveUserId('');
+      user.value = null;
       Get.offAllNamed('/login');
-      
-      print("Logout realizado e cache limpo.");
     } catch (e) {
       print("Erro ao deslogar: $e");
-    }
-  }
-
-
-   Future<void> requestSignUp(Map<String, dynamic> userData) async {
-    try {
-      isLoading.value = true;
-    //   final response = await http.post(
-    //     Uri.parse('https://seu-back.onrender.com/auth/signup'),
-    //     headers: {"Content-Type": "application/json"},
-    //     body: jsonEncode(userData),
-    //   );
-
-    //   final data = jsonDecode(response.body);
-
-    //   if (response.statusCode == 200) {
-    //     _tempToken = data['data']['token'];
-    //     _userEmail = userData['email'];
-        Get.toNamed('/verification'); // Navega para a tela de código
-    //   } else {
-    //     Get.snackbar("Erro", data['message'] ?? "Falha ao cadastrar");
-    //   }
-    } catch (e) {
-      Get.snackbar("Erro", "Conexão com o servidor falhou");
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  // ETAPA 2: Confirmar Código
-  Future<void> confirmCode(String code) async {
-    try {
-      isLoading.value = true;
-      // final response = await http.post(
-      //   Uri.parse('https://seu-back.onrender.com/auth/signup-confirm'),
-      //   headers: {"Content-Type": "application/json"},
-      //   body: jsonEncode({"token": _tempToken, "code": code}),
-      // );
-
-      // if (response.statusCode == 201) {
-        Get.offAllNamed('/login'); // Cadastro finalizado!
-        Get.snackbar("Sucesso", "Conta criada! Agora você pode logar.");
-      // } else {
-      //   Get.snackbar("Erro", "Código inválido ou expirado.");
-      // }
-    } finally {
-      isLoading.value = false;
     }
   }
 }
